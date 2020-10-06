@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <title>sky.lea.moe</title>
-    <meta name="description" content="A beautiful site for sharing your SkyBlock profile 🌹">
+    <meta name="description" content="A beautiful site for sharing your Wynncraft profile 🌹">
     <link rel="shortcut icon" href="/resources/img/logo_square.png" type="image/png">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <meta property="og:image" content="/resources/img/logo_square.png">
-    <meta property="og:title" content="SkyBlock Stats">
-    <meta property="og:description" content="A beautiful site for sharing your SkyBlock profile 🌹">
+    <meta property="og:title" content="Wynncraft Stats">
+    <meta property="og:description" content="A beautiful site for sharing your Wynncraft profile 🌹">
 <%- include('../includes/resources') %>
     <style>
     @media (max-width: 480px){
@@ -56,7 +56,7 @@
         <%- include('../includes/header') %>
         <div id="enter_player_box_wrapper">
             <div id="enter_player_box">
-                <p>Show SkyBlock stats for</p>
+                <p>Show Wynncraft stats for</p>
                 <input <% if(player){ %> value="<%= player %>" <% }%> id="inp_enter_username" type="text" placeholder="Enter username">
                 <a href="<% if(player){ %>/stats/<%= player %><% }else{ %>#<% } %>" id="goto_target_username">Show me</a>
                 <!--<p>or take me to a <a href="/random/stats">random profile</a>.</p>-->
@@ -67,41 +67,6 @@
                 <div id="error_title">Error</div><div id="error_text"><%= error %></div>
             </div>
         </div>
-        <% if('top_profiles' in extra){ %>
-        <div id="top_profiles_box_wrapper">
-            <a href="https://sky.shiiyu.moe" target="_blank" rel="nofollow" class="external-app skycrypt-banner">
-                <div class="external-app-icon" style="background-image: url(/resources/img/logo_skycrypt.png)"></div>
-                <div class="external-app-name">SkyCrypt <span class="grey-text">– sky.shiiyu.moe</span></div>
-                <div class="external-app-description">Continued version of sky.lea.moe made by friends with Custom Themes, Pet Abilities, Dungeon Stats, and more!</div>
-            </a>
-            <% for(const [index, profile] of extra.top_profiles.entries()){
-                const lastUpdated = profile.profileInfo.last_save;
-                let lastUpdatedText = "";
-
-                const diff = (+new Date() - lastUpdated) / 1000;
-
-                if(diff < 10 * 60)
-                    lastUpdatedText = `<span class="stat-value">Currently online</span>`;
-                else
-                    lastUpdatedText = `<span class="stat-name">Last online: </span><span class="stat-value">${moment(lastUpdated).fromNow()}</span>`;
-
-                %>
-                <a href="/stats/<%= profile.uuid %>" class="top-profile">
-                    <img src="https://crafatar.com/avatars/<%= profile.uuid %>?size=128&overlay" class="profile-avatar">
-                    <div class="profile-name"><%= profile.userInfo.username %><% if('emoji' in profile.userInfo){ %><%- extra.twemoji.parse(profile.userInfo.emoji) %><% } %></div><br>
-                    <div class="profile-last-online"><%- lastUpdatedText %></div>
-                    <% /*
-
-                    - Hide Views for now due to abuse -
-
-                    %>
-                    <div class="profile-views">Views: <%= helper.formatNumber(profile.total, true) %></div>
-                    <div class="profile-rank">#<%= index + 1 %></div>
-                    <% */ %>
-                </a>
-            <% } %>
-        </div>
-        <% } %>
         <%- include('../includes/footer'); %>
         <script src="/resources/js/js.cookie.min.js"></script>
         <script>

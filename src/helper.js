@@ -8,9 +8,6 @@ const _ = require('lodash');
 const constants = require('./constants');
 const credentials = require('./../credentials.json');
 
-const Redis = require("ioredis");
-const redisClient = new Redis();
-
 const Hypixel = axios.create({
     baseURL: 'https://api.hypixel.net/'
 });
@@ -78,30 +75,13 @@ module.exports = {
         return "";
     },
 
-    floorName: floor => floor == '0' ? 'entrance' : `floor_${floor}`,
-
-    resolveUsernameOrUuid: async (uuid, db, cacheOnly = false) => {
+    resolveUsernameOrUuid: async (uuid, cacheOnly = false) => {
         let output;
         let user = null;
 
         uuid = uuid.replace(/\-/g, '');
 
         const isUuid = uuid.length == 32;
-
-        if(isUuid){
-            user = await db
-            .collection('usernames')
-            .findOne({ uuid });
-        }else{
-            const playerObjects = await db
-            .collection('usernames')
-            .find({ $text: { $search: uuid } })
-            .toArray();
-
-            for(const doc of playerObjects)
-                if(doc.username.toLowerCase() == uuid.toLowerCase())
-                    user = doc;
-        }
 
         let skin_data = { skinurl: 'https://textures.minecraft.net/texture/3b60a1f6d562f52aaebbf1434f1de147933a3affe0e764fa49ea057536623cd3', model: 'slim' };
 
@@ -117,227 +97,66 @@ module.exports = {
             let profileRequest = axios(`https://api.ashcon.app/mojang/v2/user/${uuid}`, { timeout: 5000 });
 
             profileRequest.then(async response => {
-                try{
-                    const { data } = response;
+							try {
+								const { data } = response;
 
-                    data.id = data.uuid.replace(/\-/g, '');
+								data.id = data.uuid.replace(/\-/g, '');
 
-                    let updateDoc = {
-                        username: data.username,
-                        date: +new Date()
-                    }
+								let updateDoc = {
+									username: data.username,
+									date: +new Date()
+								}
 
-                    if(module.exports.hasPath(data.textures, 'skin')){
-                        const skin = data.textures.skin;
+								if(module.exports.hasPath(data.textures, 'skin')){
+									const skin = data.textures.skin;
 
-                        skin_data.skinurl = data.textures.skin.url;
-                        skin_data.model = data.textures.slim ? 'slim' : 'regular';
-                    }
+									skin_data.skinurl = data.textures.skin.url;
+									skin_data.model = data.textures.slim ? 'slim' : 'regular';
+								}
 
-                    if(module.exports.hasPath(data.textures, 'cape'))
-                        skin_data.capeurl = data.textures.cape.url;
+								if(module.exports.hasPath(data.textures, 'cape'))
+									skin_data.capeurl = data.textures.cape.url;
 
-                    updateDoc = Object.assign(updateDoc, skin_data);
-
-                    await db
-                    .collection('usernames')
-                    .updateOne(
-                        { uuid: data.id },
-                        { $set: updateDoc },
-                        { upsert: true }
-                    );
-
-                    const playerObjects = await db
-                    .collection('usernames')
-                    .find({ $text: { $search: data.username } });
-
-                    for await(const doc of playerObjects){
-                        if(doc.uuid == data.id)
-                            continue;
-
-                        if(doc.username.toLowerCase() == data.username.toLowerCase()){
-                            await db
-                            .collection('usernames')
-                            .deleteOne(
-                                { _id: doc._id }
-                            );
-
-                            module.exports.resolveUsernameOrUuid(doc.uuid, db).catch(console.error);
-                        }
-                    }
-                }catch(e){
-                    console.error(e);
-                }
+								updateDoc = Object.assign(updateDoc, skin_data);
+							} catch(e) {
+								console.error(e);
+							}
             }).catch(async err => {
-                if(user)
-                    await db
-                    .collection('usernames')
-                    .updateOne(
-                        { uuid: user.uuid },
-                        { $set: { date: +new Date() } }
-                    );
-
-                console.error(err);
+							console.error(err);
             });
 
-            if(!user){
-                try{
-                    let { data } = await profileRequest;
+            if (!user) {
+							try {
+								let { data } = await profileRequest;
 
-                    data.id = data.uuid.replace(/\-/g, '');
+								data.id = data.uuid.replace(/\-/g, '');
 
-                    if(module.exports.hasPath(data.textures, 'skin')){
-                        skin_data.skinurl = data.textures.skin.url;
-                        skin_data.model = data.textures.slim ? 'slim' : 'regular';
-                    }
+								if(module.exports.hasPath(data.textures, 'skin')){
+									skin_data.skinurl = data.textures.skin.url;
+									skin_data.model = data.textures.slim ? 'slim' : 'regular';
+								}
 
-                    if(module.exports.hasPath(data.textures, 'cape'))
-                        skin_data.capeurl = data.textures.cape.url;
+								if(module.exports.hasPath(data.textures, 'cape'))
+									skin_data.capeurl = data.textures.cape.url;
 
-                    return { uuid: data.id, display_name: data.username, skin_data };
-                }catch(e){
-                    if(isUuid){
-                        return { uuid, display_name: uuid, skin_data };
-                    }else{
-                        if(module.exports.hasPath(e, 'response', 'data', 'reason'))
-                            throw e.response.data.reason;
-                        else
-                            throw "Failed resolving username.";
-                    }
-                }
+								return { uuid: data.id, display_name: data.username, skin_data };
+							} catch(e) {
+								if (isUuid) {
+									return { uuid, display_name: uuid, skin_data };
+								} else {
+									if (module.exports.hasPath(e, 'response', 'data', 'reason'))
+										throw e.response.data.reason;
+									else
+										throw "Failed resolving username.";
+								}
+							}
             }
         }
 
         if(user)
-            return { uuid: user.uuid, display_name: user.username, emoji: user.emoji, skin_data };
+					return { uuid: user.uuid, display_name: user.username, emoji: user.emoji, skin_data };
         else
-            return { uuid, display_name: uuid, skin_data };
-    },
-
-    getGuild: async (uuid, db, cacheOnly = false) => {
-        const guildMember = await db
-        .collection('guildMembers')
-        .findOne({ uuid: uuid });
-
-        let guildObject = null;
-
-        if(cacheOnly && guildMember === null)
-            return null;
-
-        if(guildMember !== null && guildMember.gid !== null)
-            guildObject = await db
-            .collection('guilds')
-            .findOne({ gid: guildMember.gid });
-
-        if(cacheOnly || (guildMember !== null && guildMember.gid !== null && (guildObject === null || (Date.now() - guildMember.last_updated) < 3600 * 1000))){
-            if(guildMember.gid !== null){
-                const guildObject = await db
-                .collection('guilds')
-                .findOne({ gid: guildMember.gid });
-
-                if(guildObject === null)
-                    return null;
-
-                guildObject.level = module.exports.getGuildLevel(guildObject.exp);
-                guildObject.gmUser = await module.exports.resolveUsernameOrUuid(guildObject.gm, db, cacheOnly);
-                guildObject.rank = guildMember.rank;
-
-                return guildObject;
-            }
-
-            return null;
-        }else{
-            if(guildMember === null || (Date.now() - guildMember.last_updated) > 3600 * 1000){
-                try{
-                    const guildResponse = await Hypixel.get('guild', { params: { player: uuid, key: credentials.hypixel_api_key }});
-
-                    const { guild } = guildResponse.data;
-
-                    let gm;
-
-                    if(guild && guild !== null){
-                        for(const member of guild.members)
-                            if(["guild master", "guildmaster"].includes(member.rank.toLowerCase()))
-                                gm = member.uuid;
-
-                        for(const member of guild.members){
-                            if(!gm && guild.ranks.filter(a => a.name.toLowerCase() == member.rank.toLowerCase()).length == 0)
-                                gm = member.uuid;
-
-                            await db
-                            .collection('guildMembers')
-                            .updateOne(
-                                { uuid: member.uuid },
-                                { $set: { gid: guild._id, rank: member.rank, last_updated: new Date() }},
-                                { upsert: true }
-                            );
-                        }
-
-                        const guildMembers = await db
-                        .collection('guildMembers')
-                        .find({ gid: guild._id })
-                        .toArray();
-
-                        for(const member of guildMembers){
-                            if(guild.members.filter(a => a.uuid == member.uuid).length == 0){
-                                await db
-                                .collection('guildMembers')
-                                .updateOne(
-                                    { uuid: member.uuid },
-                                    { $set: { gid: null, last_updated: new Date() } }
-                                );
-                            }
-                        }
-
-                        const guildObject = await db
-                        .collection('guilds')
-                        .findOneAndUpdate(
-                            { gid: guild._id },
-                            { $set: { name: guild.name, tag: guild.tag, exp: guild.exp, created: guild.created, gm, members: guild.members.length, last_updated: new Date() }},
-                            { returnOriginal: false, upsert: true }
-                        );
-
-                        guildObject.value.level = module.exports.getGuildLevel(guildObject.value.exp);
-                        guildObject.value.gmUser = await module.exports.resolveUsernameOrUuid(guildObject.value.gm, db);
-                        guildObject.value.rank = guild.members.filter(a => a.uuid == uuid)[0].rank;
-
-                        return guildObject.value;
-                    }else{
-                        await db
-                        .collection('guildMembers')
-                        .findOneAndUpdate(
-                            { uuid },
-                            { $set: { gid: null, last_updated: new Date() }},
-                            { upsert: true }
-                        );
-                    }
-
-                    return null;
-                }catch(e){
-                    console.error(e);
-                    return null;
-                }
-            }else{
-                return null;
-            }
-        }
-    },
-
-    getGuildLevel: xp => {
-        let level = 0;
-
-        for(let i = 0;; i++){
-            const xpNeeded = constants.guild_xp[Math.min(constants.guild_xp.length - 1, i)];
-
-            xp -= xpNeeded;
-
-            if(xp < 0)
-                return level;
-
-            level++;
-        }
-
-        return level;
+					return { uuid, display_name: uuid, skin_data };
     },
 
     // Convert Minecraft lore to HTML
@@ -561,104 +380,4 @@ module.exports = {
 
         return output;
     },
-
-    updateRank: async (uuid, db) => {
-        let rank = { rankText: null, rankColor: null, plusText: null, plusColor: null, socials: {}, achievements: {} };
-
-        try{
-            const response = await retry(async () => {
-                return await Hypixel.get('player', {
-                    params: {
-                        key: credentials.hypixel_api_key, uuid
-                    }
-                });
-            });
-
-            const player = response.data.player;
-
-            rank = Object.assign(rank, module.exports.parseRank(player));
-
-            if(module.exports.hasPath(player, 'socialMedia', 'links'))
-                rank.socials = player.socialMedia.links;
-
-            if(module.exports.hasPath(player, 'achievements'))
-                rank.achievements = player.achievements;
-        }catch(e){
-            console.error(e);
-        }
-
-        rank.last_updated = new Date();
-
-        await db
-        .collection('hypixelPlayers')
-        .updateOne(
-            { uuid },
-            { $set: rank },
-            { upsert: true }
-        );
-
-        return rank;
-    },
-
-    getRank: async (uuid, db, cacheOnly = false) => {
-        let hypixelPlayer = await db
-        .collection('hypixelPlayers')
-        .findOne({ uuid });
-
-        let updateRank;
-
-        if(cacheOnly === false && (hypixelPlayer === null || (+new Date() - hypixelPlayer.last_updated) > 3600 * 1000))
-            updateRank = module.exports.updateRank(uuid, db);
-
-        if(cacheOnly === false && hypixelPlayer === null)
-            hypixelPlayer = await updateRank;
-
-        if(hypixelPlayer === null){
-            hypixelPlayer = { achievements: {} };
-        }
-
-        return hypixelPlayer;
-    },
-
-    fetchMembers: async (profileId, db, returnUuid = false) => {
-        let output = [];
-
-        const members = await db
-        .collection('members')
-        .find({ profile_id: profileId })
-        .toArray();
-
-        if(members.length == 0){
-            let profileResponse = await Hypixel.get('skyblock/profile', { params: { key: credentials.hypixel_api_key, profile: profileId } });
-
-            let memberPromises = [];
-
-            for(const member in profileResponse.data.profile.members)
-                memberPromises.push(module.exports.resolveUsernameOrUuid(member, db));
-
-            let profileMembers = await Promise.all(memberPromises);
-
-            for(const profileMember of profileMembers){
-                await db
-                .collection('members')
-                .replaceOne(
-                    { profile_id: profileId, uuid: profileMember.uuid },
-                    { profile_id: profileId, uuid: profileMember.uuid, username: profileMember.display_name },
-                    { upsert: true }
-                );
-            }
-
-            if(returnUuid)
-                output = profileMembers;
-            else
-                output = profileMembers.map(a => a.display_name);
-        }else{
-            if(returnUuid)
-                output = members.map(a => { return { uuid: a.uuid, display_name: a.username } });
-            else
-                output = members.map(a => a.username);
-        }
-
-        return output;
-    }
 }

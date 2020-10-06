@@ -10,10 +10,6 @@
     <div data-tippy-content="Supporting LGBTQ+ rights all around the year! ❤️<br><br>Click for a surprise. :)" class="pride-flag logo"></div>
     <a href="/" id="site_name">sky.lea.moe</a>
     <div class="social-button" id="info_button" onclick="toggleInfo()">About</div>
-    <% if('donations' in extra){ %>
-        <a title="Patreon" target="_blank" rel="nofollow" href="https://patreon.com/LeaPhant" class="social-button patreon"><%= extra.donations.patreon %> Patrons<div class="social-icon"></div></a>
-        <a title="Ko-fi" target="_blank" rel="nofollow" href="https://ko-fi.com/leaphant" class="social-button ko-fi"><%= extra.donations.kofi %>x Ko-fi<div class="social-icon"></div></a>
-    <% } %>
     <div id="search_user"><input placeholder="Enter username" <% if(page == 'index'){ %>tabindex="-1"<% } %> type="text" id="inp_search_user"></input><a href="#" <% if(page == 'index'){ %>tabindex="-1"<% } %> id="btn_search_user"></a></div>
     <a href="https://blacklivesmatters.carrd.co/" target="_blank" rel="nofollow" data-tippy-content="<strong>Black Lives Matter!</strong><br><br>Click for a collection of links on how to support the fight against racial inequality." class="blm-logo"></a>
 </header>
@@ -23,8 +19,6 @@
         <p>This open-source project was created by <a class="link link-twitter" href="https://twitter.com/LeaPhant" target="_blank">LeaPhant</a> and is no longer in development.<br>You can find the code on <a class="link link-github" href="https://github.com/LeaPhant/skyblock-stats" target="_blank">GitHub</a> and use any parts of it (or all of it) to create similar projects and sites!</p>
         <p>Chat: <a class="link link-discord" href="https://discord.gg/R9knhVc">discord.gg/R9knhVc</a></p>
         <p>If you want to support my work, you can do that via <a class="link link-patreon" href="https://www.patreon.com/LeaPhant" target="_blank">Patreon</a> (monthly), <a class="link link-kofi" href="https://www.ko-fi.com/leaphant" target="_blank">Ko-fi</a> (one-time) or <a class="link link-paypal" href="https://paypal.me/leaphant" target="_blank">PayPal</a> (one-time). It would mean a lot to me!</p>
-        <p>Big thanks to my all-time $5 patrons :)</p>
-        <p><%- include('patrons') %></p>
         <h4>Used Resources</h4>
         <ul>
             <li>Data: <a rel="nofollow" href="https://api.hypixel.net/" target="_blank">Hypixel API</a> by <span class="name">Hypixel</span>.</li>

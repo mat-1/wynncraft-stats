@@ -3,35 +3,33 @@ document.addEventListener('DOMContentLoaded', function(){
     let tippyInstance;
 
     tippy('*[data-tippy-content]:not(.interactive-tooltip)', {
-        trigger: 'mouseenter click'
+			trigger: 'mouseenter click'
     });
 
-    const playerModel = document.getElementById("player_model");
+    const playerModel = document.getElementById('player_model');
 
+	
     let skinViewer;
 
-    if(calculated.skin_data){
-        skinViewer = new skinview3d.SkinViewer({
-    		domElement: playerModel,
-    		width: playerModel.offsetWidth,
-    		height: playerModel.offsetHeight,
-    		skinUrl: "/texture/" + calculated.skin_data.skinurl.split("/").pop(),
-    		capeUrl: 'capeurl' in calculated.skin_data ? "/texture/" + calculated.skin_data.capeurl.split("/").pop() : "/cape/" + calculated.display_name
-    	});
+		skinViewer = new skinview3d.SkinViewer({
+			domElement: playerModel,
+			width: playerModel.offsetWidth,
+			height: playerModel.offsetHeight,
+			skinUrl: 'https://sky.lea.moe/texture/' + calculated.skin_data.skinurl.split("/").pop()
+		});
 
-    	skinViewer.camera.position.set(-18, -3, 58);
-    	skinViewer.detectModel = false;
+		skinViewer.camera.position.set(-18, -3, 58);
+		skinViewer.detectModel = false;
 
-        if(calculated.skin_data.model == 'slim')
-    	   skinViewer.playerObject.skin.slim = true;
+			if(calculated.skin_data.model == 'slim')
+				skinViewer.playerObject.skin.slim = true;
 
-    	let controls = new skinview3d.createOrbitControls(skinViewer);
+		let controls = new skinview3d.createOrbitControls(skinViewer);
 
-        controls.enableZoom = false;
-        controls.enablePan = false;
+			controls.enableZoom = false;
+			controls.enablePan = false;
 
-    	skinViewer.animations.add(skinview3d.IdleAnimation);
-    }
+		skinViewer.animations.add(skinview3d.IdleAnimation);
 
     tippyInstance = tippy('.interactive-tooltip', {
         trigger: 'mouseenter click',
@@ -46,8 +44,6 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     });
 
-    const all_items = items.armor.concat(items.inventory, items.enderchest, items.talisman_bag, items.fishing_bag, items.quiver, items.potion_bag, items.wardrobe_inventory);
-
     let dimmer = document.querySelector("#dimmer");
 
     let inventoryContainer = document.querySelector('#inventory_container');
@@ -59,10 +55,6 @@ document.addEventListener('DOMContentLoaded', function(){
 
     const urlParamsString = urlParams.toString().length > 0 ? '?' + urlParams.toString() : '';
 
-    if(calculated.profile.cute_name == 'Deleted')
-        history.replaceState({}, document.title, '/stats/' + calculated.display_name + '/' + calculated.profile.profile_id + urlParamsString);
-    else
-        history.replaceState({}, document.title, '/stats/' + calculated.display_name + '/' + calculated.profile.cute_name + urlParamsString);
 
     function isEnchanted(item){
         if(item.animated)
